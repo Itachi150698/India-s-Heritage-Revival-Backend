@@ -1,6 +1,7 @@
 package com.codeWithProjects.ecom.services.customer.cart;
 
 import com.codeWithProjects.ecom.dto.AddProductInCartDto;
+import com.codeWithProjects.ecom.dto.OrderDto;
 import com.codeWithProjects.ecom.entity.CartItems;
 import com.codeWithProjects.ecom.entity.Order;
 import com.codeWithProjects.ecom.entity.Product;
@@ -85,6 +86,19 @@ public class CartServiceImpl implements CartService {
 
             return ResponseEntity.status(HttpStatus.CREATED).body(cartItem);
         }
+    }
+
+    public OrderDto getCartByUserId(Long userId){
+        Order activeOrder = orderRepository.findByUserIdAndOrderStatus(userId, OrderStatus.Pending);
+
+        OrderDto orderDto = new OrderDto();
+        orderDto.setAmount(activeOrder.getAmount());
+        orderDto.setId(activeOrder.getId());
+        orderDto.setOrderStatus(activeOrder.getOrderStatus());
+        orderDto.setDiscount(activeOrder.getDiscount());
+        orderDto.setTotalAmount(activeOrder.getTotalAmount());
+
+        return orderDto;
     }
 }
 

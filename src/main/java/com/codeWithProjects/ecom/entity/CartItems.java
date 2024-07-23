@@ -1,5 +1,6 @@
 package com.codeWithProjects.ecom.entity;
 
+import com.codeWithProjects.ecom.dto.CartItemsDto;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.Data;
@@ -33,4 +34,8 @@ public class CartItems {
     @JoinColumn(name = "order_id")
     @JsonBackReference
     private Order order;
+
+//    public CartItemsDto getCartDto(){
+//
+//    }
 }
