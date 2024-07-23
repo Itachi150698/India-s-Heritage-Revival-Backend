@@ -39,7 +39,7 @@ public class AuthServiceImpl implements AuthService{
         order.setTotalAmount(0L);
         order.setDiscount(0L);
         order.setUser(createdUser);
-        order.setOrderStatus(OrderStatus.pending);
+        order.setOrderStatus(OrderStatus.Pending);
         orderRepository.save(order);
 
         UserDto userDto = new UserDto();

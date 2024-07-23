@@ -1,5 +1,6 @@
 package com.codeWithProjects.ecom.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.Data;
 import org.hibernate.annotations.OnDelete;
@@ -7,6 +8,7 @@ import org.hibernate.annotations.OnDeleteAction;
 
 @Entity
 @Data
+@Table(name = "cart_items")
 public class CartItems {
 
     @Id
@@ -27,7 +29,8 @@ public class CartItems {
     @OnDelete(action = OnDeleteAction.CASCADE)
     private User user;
 
-    @OneToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "order_id")
+    @JsonBackReference
     private Order order;
 }
