@@ -3,15 +3,10 @@ package com.codeWithProjects.ecom.services.customer.cart;
 import com.codeWithProjects.ecom.dto.AddProductInCartDto;
 import com.codeWithProjects.ecom.dto.CartItemsDto;
 import com.codeWithProjects.ecom.dto.OrderDto;
-import com.codeWithProjects.ecom.entity.CartItems;
-import com.codeWithProjects.ecom.entity.Order;
-import com.codeWithProjects.ecom.entity.Product;
-import com.codeWithProjects.ecom.entity.User;
+import com.codeWithProjects.ecom.entity.*;
 import com.codeWithProjects.ecom.enums.OrderStatus;
-import com.codeWithProjects.ecom.repository.CartItemsRepository;
-import com.codeWithProjects.ecom.repository.OrderRepository;
-import com.codeWithProjects.ecom.repository.ProductRepository;
-import com.codeWithProjects.ecom.repository.UserRepository;
+import com.codeWithProjects.ecom.exceptions.ValidationException;
+import com.codeWithProjects.ecom.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -19,6 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -38,6 +34,9 @@ public class CartServiceImpl implements CartService {
 
     @Autowired
     private CartItemsRepository cartItemsRepository;
+
+    @Autowired
+    private CouponRepository couponRepository;
 
     @Override
     public ResponseEntity<?> addProductToCart(AddProductInCartDto addProductInCartDto) {
@@ -101,7 +100,27 @@ public class CartServiceImpl implements CartService {
         orderDto.setDiscount(activeOrder.getDiscount());
         orderDto.setTotalAmount(activeOrder.getTotalAmount());
         orderDto.setCartItems(cartItemsDtoList);
+
         return orderDto;
+    }
+
+    public OrderDto applyCoupon(Long userId, String code){
+        Order activeOrder = orderRepository.findByUserIdAndOrderStatus(userId, OrderStatus.Pending);
+        Coupon coupon = couponRepository.findByCode(code).orElseThrow(()-> new ValidationException("Coupon not found."));
+
+        if (couponIsExpired(coupon)){
+            throw new ValidationException("Coupon has expired.");
+        }
+
+        double discountAmount = ((coupon.getDiscount() / 100.0) * activeOrder.getTotalAmount());
+        double netAmount = activeOrder.getTotalAmount() - discountAmount;
+    }
+
+    private boolean couponIsExpired(Coupon coupon){
+        Date currentDate = new Date();
+        Date expirationDate = coupon.getExpirationDate();
+
+        return expirationDate != null && currentDate.after(expirationDate);
     }
 }
 
