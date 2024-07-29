@@ -3,11 +3,11 @@ package com.codeWithProjects.ecom.dto;
 import lombok.Data;
 
 @Data
-public class AddProductInCartDto {
+public class PlaceOrderDto {
 
     private Long userId;
 
-    private Long productId;
+    private String address;
 
-//    private Long orderId;
+    private String  orderDescription;
 }
