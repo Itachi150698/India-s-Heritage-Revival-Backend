@@ -1,5 +1,6 @@
 package com.codeWithProjects.ecom.entity;
 
+import com.codeWithProjects.ecom.dto.FAQDto;
 import jakarta.persistence.*;
 import lombok.Data;
 import org.hibernate.annotations.OnDelete;
@@ -21,4 +22,15 @@ public class FAQ {
     @JoinColumn(name = "product_Id", nullable = false)
     @OnDelete(action = OnDeleteAction.CASCADE)
     private Product product;
+
+    public FAQDto getFAQDto(){
+        FAQDto faqDto = new FAQDto();
+
+        faqDto.setId(id);
+        faqDto.setQuestion(question);
+        faqDto.setAnswer(answer);
+        faqDto.setProductId(product.getId());
+
+        return faqDto;
+    }
 }
