@@ -15,7 +15,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/admin")
 @RequiredArgsConstructor
-public class AdminProductController {
+public class  AdminProductController {
 
     private final AdminProductService adminProductService;
 
@@ -51,5 +51,25 @@ public class AdminProductController {
     @PostMapping("/faq/{productId}")
     public ResponseEntity<FAQDto> postFAQ(@PathVariable Long productId, @RequestBody FAQDto faqDto){
         return ResponseEntity.status(HttpStatus.CREATED).body(faqService.postFAQ(productId, faqDto));
+    }
+
+    @GetMapping("/product/{productId}")
+    public ResponseEntity<ProductDto> getProductById(@PathVariable Long productId){
+        ProductDto productDto = adminProductService.getProductById(productId);
+        if (productDto != null){
+            return ResponseEntity.ok(productDto);
+        }else {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @PutMapping("/product/{productId}")
+    public ResponseEntity<ProductDto> updateProduct(@PathVariable Long productId, @ModelAttribute ProductDto productDto) throws IOException {
+        ProductDto updateProduct = adminProductService.updateProduct(productId, productDto);
+        if (updateProduct != null){
+            return ResponseEntity.ok(updateProduct);
+        }else {
+            return ResponseEntity.notFound().build();
+        }
     }
 }

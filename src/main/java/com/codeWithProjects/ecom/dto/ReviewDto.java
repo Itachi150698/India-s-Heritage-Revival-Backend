@@ -6,23 +6,21 @@ import lombok.Data;
 import org.springframework.web.multipart.MultipartFile;
 
 @Data
-public class ProductDto {
+public class ReviewDto {
 
     private Long id;
 
-    private String name;
-
-    private Long price;
+    private Long rating;
 
     private String description;
 
-    private byte[] byteImg;
-
-    private Long categoryId;
-
-    private String categoryName;
-
-    private Long Quantity;
-
     private MultipartFile img;
+
+    private byte[] returnedImg;
+
+    private Long userId;
+
+    private Long productId;
+
+    private String username;
 }
