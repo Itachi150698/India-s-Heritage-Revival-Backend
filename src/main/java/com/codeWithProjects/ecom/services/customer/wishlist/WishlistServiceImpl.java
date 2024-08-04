@@ -10,7 +10,9 @@ import com.codeWithProjects.ecom.repository.WishlistRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @AllArgsConstructor
@@ -34,5 +36,9 @@ public class WishlistServiceImpl implements WishlistService{
             return wishlistRepository.save(wishlist).getWishlistDto();
         }
         return null;
+    }
+
+    public List<WishlistDto> getWishlistByUserId(Long userId){
+        return wishlistRepository.findALlByUserId(userId).stream().map(Wishlist::getWishlistDto).collect(Collectors.toList());
     }
 }
