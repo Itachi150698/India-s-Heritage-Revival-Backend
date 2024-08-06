@@ -5,6 +5,8 @@ import com.codeWithProjects.ecom.enums.OrderStatus;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.Data;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.util.Date;
 import java.util.List;
@@ -21,6 +23,8 @@ public class Order {
 
     private String orderDescription;
 
+    @CreationTimestamp
+    @Temporal(TemporalType.TIMESTAMP)
     private Date date;
 
     private Long amount;
@@ -29,27 +33,29 @@ public class Order {
 
     private String payment;
 
+    @Enumerated(EnumType.STRING)
     private OrderStatus orderStatus;
 
     private Long totalAmount;
 
     private Long discount;
 
+    @Column(nullable = false, updatable = false, unique = true)
     private UUID trackingId;
 
-    @OneToOne(cascade = CascadeType.MERGE)
-    @JoinColumn(name = "user_id", referencedColumnName = "id")
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @OneToOne(cascade = CascadeType.MERGE)
-    @JoinColumn(name = "coupon_id", referencedColumnName = "id")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "coupon_id")
     private Coupon coupon;
 
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
     private List<CartItems> cartItems;
 
-    public OrderDto getOrderDto(){
+    public OrderDto getOrderDto() {
         OrderDto orderDto = new OrderDto();
 
         orderDto.setId(id);
@@ -60,9 +66,16 @@ public class Order {
         orderDto.setDate(date);
         orderDto.setOrderStatus(orderStatus);
         orderDto.setUserName(user.getName());
-        if (coupon != null){
+        if (coupon != null) {
             orderDto.setCouponName(coupon.getName());
         }
         return orderDto;
+    }
+
+    @PrePersist
+    public void prePersist() {
+        if (trackingId == null) {
+            trackingId = UUID.randomUUID();
+        }
     }
 }

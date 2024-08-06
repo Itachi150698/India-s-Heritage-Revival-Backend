@@ -35,7 +35,7 @@ public class CartItems {
     @JsonBackReference
     private Order order;
 
-    public CartItemsDto getCartDto(){
+    public CartItemsDto getCartDto() {
         CartItemsDto cartItemsDto = new CartItemsDto();
         cartItemsDto.setId(id);
         cartItemsDto.setPrice(price);
@@ -44,7 +44,6 @@ public class CartItems {
         cartItemsDto.setUserId(user.getId());
         cartItemsDto.setProductName(product.getName());
         cartItemsDto.setReturnedImg(product.getImg());
-
         return cartItemsDto;
     }
 }
