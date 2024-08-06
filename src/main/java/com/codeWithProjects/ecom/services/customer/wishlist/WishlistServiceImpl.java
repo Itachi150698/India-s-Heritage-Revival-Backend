@@ -16,19 +16,24 @@ import java.util.stream.Collectors;
 
 @Service
 @AllArgsConstructor
-public class WishlistServiceImpl implements WishlistService{
+public class WishlistServiceImpl implements WishlistService {
 
     private final WishlistRepository wishlistRepository;
-
     private final UserRepository userRepository;
-
     private final ProductRepository productRepository;
 
-    public WishlistDto addProductToWishlist(WishlistDto wishlistDto){
+    @Override
+    public WishlistDto addProductToWishlist(WishlistDto wishlistDto) {
         Optional<Product> optionalProduct = productRepository.findById(wishlistDto.getProductId());
         Optional<User> optionalUser = userRepository.findById(wishlistDto.getUserId());
 
-        if (optionalProduct.isPresent() && optionalUser.isPresent()){
+        if (optionalProduct.isPresent() && optionalUser.isPresent()) {
+            // Check if the product is already in the user's wishlist
+            Optional<Wishlist> existingWishlistItem = wishlistRepository.findByUserIdAndProductId(wishlistDto.getUserId(), wishlistDto.getProductId());
+            if (existingWishlistItem.isPresent()) {
+                return existingWishlistItem.get().getWishlistDto(); // Return existing item or handle accordingly
+            }
+
             Wishlist wishlist = new Wishlist();
             wishlist.setProduct(optionalProduct.get());
             wishlist.setUser(optionalUser.get());
@@ -38,7 +43,8 @@ public class WishlistServiceImpl implements WishlistService{
         return null;
     }
 
-    public List<WishlistDto> getWishlistByUserId(Long userId){
-        return wishlistRepository.findALlByUserId(userId).stream().map(Wishlist::getWishlistDto).collect(Collectors.toList());
+    @Override
+    public List<WishlistDto> getWishlistByUserId(Long userId) {
+        return wishlistRepository.findAllByUserId(userId).stream().map(Wishlist::getWishlistDto).collect(Collectors.toList());
     }
 }
