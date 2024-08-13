@@ -25,4 +25,6 @@ public interface CartService {
     List<OrderDto> getMyPlacedOrders(Long userId);
 
     OrderDto searchOrderByTrackingId(UUID trackingId);
+
+    boolean removeProductFromCart(Long userId, Long productId);
 }

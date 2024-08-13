@@ -9,6 +9,8 @@ import com.codeWithProjects.ecom.enums.OrderStatus;
 import com.codeWithProjects.ecom.exceptions.ValidationException;
 import com.codeWithProjects.ecom.repository.*;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -36,57 +38,65 @@ public class CartServiceImpl implements CartService {
     @Autowired
     private CouponRepository couponRepository;
 
+    private static final Logger logger = LoggerFactory.getLogger(CartServiceImpl.class);
+
     @Override
     public ResponseEntity<?> addProductToCart(AddProductInCartDto addProductInCartDto) {
-        // Fetch active order or create a new one if none exists
-        Order activeOrder = orderRepository.findByUserIdAndOrderStatus(addProductInCartDto.getUserId(), OrderStatus.Pending);
+        try {
+            // Fetch active order or create a new one if none exists
+            Order activeOrder = orderRepository.findByUserIdAndOrderStatus(addProductInCartDto.getUserId(), OrderStatus.Pending);
 
-        if (activeOrder == null) {
-            Optional<User> optionalUser = userRepository.findById(addProductInCartDto.getUserId());
-            if (optionalUser.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found.");
-            }
-            // Create a new order
-            activeOrder = new Order();
-            activeOrder.setUser(optionalUser.get());
-            activeOrder.setOrderStatus(OrderStatus.Pending);
-            activeOrder.setTotalAmount(0L);
-            activeOrder.setAmount(0L);
-            activeOrder.setCartItems(new ArrayList<>());
+            if (activeOrder == null) {
+                Optional<User> optionalUser = userRepository.findById(addProductInCartDto.getUserId());
+                if (optionalUser.isEmpty()) {
+                    return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found.");
+                }
+                // Create a new order
+                activeOrder = new Order();
+                activeOrder.setUser(optionalUser.get());
+                activeOrder.setOrderStatus(OrderStatus.Pending);
+                activeOrder.setTotalAmount(0L);
+                activeOrder.setAmount(0L);
+                activeOrder.setCartItems(new ArrayList<>());
 
-            // Save the new order
-            activeOrder = orderRepository.save(activeOrder);
-        }
-
-        Optional<CartItems> optionalCartItems = cartItemsRepository.findByProductIdAndOrderIdAndUserId(
-                addProductInCartDto.getProductId(), activeOrder.getId(), addProductInCartDto.getUserId());
-
-        if (optionalCartItems.isPresent()) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body("Product already in cart.");
-        } else {
-            Optional<Product> optionalProduct = productRepository.findById(addProductInCartDto.getProductId());
-            if (optionalProduct.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Product not found.");
+                // Save the new order
+                activeOrder = orderRepository.save(activeOrder);
             }
 
-            CartItems cartItem = new CartItems();
-            cartItem.setProduct(optionalProduct.get());
-            cartItem.setPrice(optionalProduct.get().getPrice());
-            cartItem.setQuantity(1L);
-            cartItem.setUser(activeOrder.getUser());
-            cartItem.setOrder(activeOrder);
+            Optional<CartItems> optionalCartItems = cartItemsRepository.findByProductIdAndOrderIdAndUserId(
+                    addProductInCartDto.getProductId(), activeOrder.getId(), addProductInCartDto.getUserId());
 
-            CartItems updatedCart = cartItemsRepository.save(cartItem);
+            if (optionalCartItems.isPresent()) {
+                return ResponseEntity.status(HttpStatus.CONFLICT).body("Product already in cart.");
+            } else {
+                Optional<Product> optionalProduct = productRepository.findById(addProductInCartDto.getProductId());
+                if (optionalProduct.isEmpty()) {
+                    return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Product not found.");
+                }
 
-            activeOrder.setTotalAmount(activeOrder.getTotalAmount() + cartItem.getPrice());
-            activeOrder.setAmount(activeOrder.getAmount() + cartItem.getPrice());
-            activeOrder.getCartItems().add(cartItem);
+                CartItems cartItem = new CartItems();
+                cartItem.setProduct(optionalProduct.get());
+                cartItem.setPrice(optionalProduct.get().getPrice());
+                cartItem.setQuantity(1L);
+                cartItem.setUser(activeOrder.getUser());
+                cartItem.setOrder(activeOrder);
 
-            orderRepository.save(activeOrder);
+                CartItems updatedCart = cartItemsRepository.save(cartItem);
 
-            return ResponseEntity.status(HttpStatus.CREATED).body(cartItem);
+                activeOrder.setTotalAmount(activeOrder.getTotalAmount() + cartItem.getPrice());
+                activeOrder.setAmount(activeOrder.getAmount() + cartItem.getPrice());
+                activeOrder.getCartItems().add(cartItem);
+
+                orderRepository.save(activeOrder);
+
+                return ResponseEntity.status(HttpStatus.CREATED).body(updatedCart);
+            }
+        } catch (Exception e) {
+            logger.error("Error adding product to cart", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred while adding the product to the cart");
         }
     }
+
 
     public OrderDto getCartByUserId(Long userId) {
         Order activeOrder = orderRepository.findByUserIdAndOrderStatus(userId, OrderStatus.Pending);
@@ -250,4 +260,31 @@ public class CartServiceImpl implements CartService {
         }
         return null;
     }
+
+    public boolean removeProductFromCart(Long userId, Long productId) {
+        Order activeOrder = orderRepository.findByUserIdAndOrderStatus(userId, OrderStatus.Pending);
+        if (activeOrder == null) {
+            throw new ValidationException("No active order found for the user.");
+        }
+
+        Optional<CartItems> optionalCartItem = cartItemsRepository.findByProductIdAndOrderIdAndUserId(productId, activeOrder.getId(), userId);
+
+        if (optionalCartItem.isPresent()) {
+            CartItems cartItem = optionalCartItem.get();
+
+            // Update the total amount and amount in the active order
+            activeOrder.setTotalAmount(activeOrder.getTotalAmount() - (cartItem.getPrice() * cartItem.getQuantity()));
+            activeOrder.setAmount(activeOrder.getAmount() - (cartItem.getPrice() * cartItem.getQuantity()));
+
+            // Remove the cart item from the repository
+            cartItemsRepository.delete(cartItem);
+
+            // Save the updated active order
+            orderRepository.save(activeOrder);
+            return true;
+        }
+
+        return false; // Return false if the item was not found in the cart
+    }
+
 }

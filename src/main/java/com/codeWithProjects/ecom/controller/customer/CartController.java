@@ -59,4 +59,15 @@ public class CartController {
     public ResponseEntity<List<OrderDto>> getMyPlacedOrders(@PathVariable Long userId){
         return ResponseEntity.ok(cartService.getMyPlacedOrders(userId));
     }
+
+    @DeleteMapping("/cart/{userId}/{productId}")
+    public ResponseEntity<?> removeProductFromCart(@PathVariable Long userId, @PathVariable Long productId) {
+        boolean removed = cartService.removeProductFromCart(userId, productId);
+        if (removed) {
+            return ResponseEntity.status(HttpStatus.NO_CONTENT).build(); // 204 No Content
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Product not found in cart.");
+        }
+    }
+
 }

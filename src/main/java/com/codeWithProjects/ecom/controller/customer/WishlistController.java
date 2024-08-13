@@ -7,6 +7,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Collections;
 import java.util.List;
 
 @RestController
@@ -45,4 +46,17 @@ public class WishlistController {
 
         return ResponseEntity.ok(wishlist);
     }
+
+    @DeleteMapping("/wishlist/{userId}/{productId}")
+    public ResponseEntity<?> removeProductFromWishlist(@PathVariable Long userId, @PathVariable Long productId) {
+        boolean isRemoved = wishlistService.removeProductFromWishlist(userId, productId);
+
+        if (isRemoved) {
+            return ResponseEntity.ok().body(Collections.singletonMap("message", "Product removed from wishlist"));
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Collections.singletonMap("error", "Product not found in wishlist"));
+        }
+    }
+
 }
+   
