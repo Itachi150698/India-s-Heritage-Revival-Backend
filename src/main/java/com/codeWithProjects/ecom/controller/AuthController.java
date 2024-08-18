@@ -58,11 +58,15 @@ public class AuthController {
         final String jwt = jwtUtil.generateToken(userDetails.getUsername());
 
         if (optionalUser.isPresent()){
-            response.getWriter().write(new JSONObject()
-                    .put("userId", optionalUser.get().getId())
-                    .put("role", optionalUser.get().getRole())
-                    .toString()
-            );
+            User user = optionalUser.get();
+            // Create JSON response including user details
+            JSONObject jsonResponse = new JSONObject()
+                    .put("userId", user.getId())
+                    .put("name", user.getName())  // Include user's name
+                    .put("email", user.getEmail())
+                    .put("role", user.getRole());
+
+            response.getWriter().write(jsonResponse.toString());
 
             response.addHeader("Access-Control-Expose-Headers", "Authorization");
             response.addHeader("Access-Control-Allow-Headers", "Authorization, X-PING-OTHER, Origin, " +
